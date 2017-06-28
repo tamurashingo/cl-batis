@@ -1,5 +1,8 @@
 # Cl-Batis - SQL Mapping Framework for Common Lisp
 
+[![Build Status](https://travis-ci.org/tamurashingo/cl-batis.svg?branch=develop)](https://travis-ci.org/tamurashingo/cl-batis)
+
+
 ## Usage
 
 ### Define SQL
