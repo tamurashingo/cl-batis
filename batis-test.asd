@@ -15,7 +15,7 @@
                :prove)
   :components ((:module "t"
                 :components
-                ((:test-file "batis")
+                ((:test-file "macro")
                  (:test-file "sqlparser"))))
   :description "Test system for CL-BATIS"
 

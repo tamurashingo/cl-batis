@@ -1,0 +1,19 @@
+(in-package :cl-user)
+(defpackage batis.macro
+  (:use :cl
+        :cl-annot))
+(in-package :batis.macro)
+
+(cl-syntax:use-syntax :annot)
+
+@export
+(defmacro defsql (sql-name args &key sql-body sql-type &allow-other-keys)
+  "define sql name and its args"
+  `(progn
+     (setf (gethash ',sql-name batis.sql:*SQL*)
+           (list :sql-body
+                 (lambda (&key ,@args &allow-other-keys)
+                   ,sql-body)
+                 :sql-type ,sql-type))))
+
+                 
