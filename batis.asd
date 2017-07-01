@@ -23,8 +23,9 @@
                :cl-syntax-annot)
   :components ((:module "src"
                 :components
-                ((:file "batis" :depends-on ("sqlparser"))
-                 (:file "sqlparser"))))
+                ((:file "macro" :depends-on ("sql"))
+                 (:file "sqlparser")
+                 (:file "sql"))))
   :description "SQL Mapping Framework for Common Lisp"
   :long-description
   #.(with-open-file (stream (merge-pathnames
