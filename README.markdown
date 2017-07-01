@@ -19,13 +19,13 @@
              product
            where
              valid_flag = '1' "
-           sq-condition (not (null product_name))
-                        " and
-                            product_name like :product_name "
-           sql-condition (and (not (null price_low))
-                              (not (null price_high)))
+           (sq-condition (not (null product_name))
                          " and
-                             product_price between :price_row and :price_high "
+                             product_name like :product_name ")
+           (sql-condition (and (not (null price_low))
+                               (not (null price_high)))
+                          " and
+                              product_price between :price_row and :price_high ")
            " order by
                product_id
              limit :limit ")
