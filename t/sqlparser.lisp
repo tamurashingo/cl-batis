@@ -5,23 +5,27 @@
         :prove))
 (in-package :batis-test.sqlparser)
 
-(plan 5)
+(plan 7)
 
 (is (parse "select column from table")
     '(:SQL "select column from table"
-      :ARGS NIL))
+      :ARGS NIL)
+    "normal SQL")
 
 (is (parse "select column from table where id = :id")
     '(:SQL "select column from table where id = ?  "
-      :ARGS (:ID)))
+      :ARGS (:ID))
+    "named parameter")
 
 (is (parse "update table set column = ':column'")
     '(:SQL "update table set column = ':column'"
-      :ARGS NIL))
+      :ARGS NIL)
+    "string literal")
 
 (is (parse "select column from table where valid_flag = :valid_flag and id = :id")
     '(:SQL "select column from table where valid_flag = ?           and id = ?  "
-      :ARGS (:VALID_FLAG :ID)))
+      :ARGS (:VALID_FLAG :ID))
+    "named parameters")
 
 (is (parse
      "select
@@ -76,6 +80,19 @@
         m_group.valid_start_date <= ?          
       and
         m_group.valid_end_date > ?        "
-       :ARGS (:USER_ID :START_DATE :END_DATE :START_DATE :END_DATE :START_DATE :END_DATE)))
+       :ARGS (:USER_ID :START_DATE :END_DATE :START_DATE :END_DATE :START_DATE :END_DATE))
+     "named parameters")
+
+(is (parse "update table set content = 'Don''t'")
+    '(:SQL "update table set content = 'Don''t'"
+      :ARGS NIL)
+    "apostrophe in string")
+
+(is (parse "update table set content = 'Don''t:id'")
+    '(:SQL "update table set content = 'Don''t:id'"
+      :ARGS NIL)
+    "apostrophe and colon in string")
+
 
 (finalize)
+

@@ -41,44 +41,18 @@
       params
       (let ((c (char sql pos)))
         (cond ((char= c #\')
-               (lex-quote1 sql (1+ pos) len params))
+               (lex-normal sql (1+ pos) len params))
               (t
                (lex-quote sql (1+ pos) len params))))))
-
-(defun lex-quote1 (sql pos len params)
-  (if (>= pos len)
-      params
-      (let ((c (char sql pos)))
-        (cond ((char= c #\')
-               (lex-quote sql (1+ pos) len params))
-              ((char= c #\")
-               (lex-doublequote sql (1+ pos) len params))
-              ((char= c #\:)
-               (lex-colon sql (1+ pos) len params pos))
-              (t
-               (lex-normal sql (1+ pos) len params))))))
 
 (defun lex-doublequote (sql pos len params)
   (if (>= pos len)
       params
       (let ((c (char sql pos)))
         (cond ((char= c #\")
-               (lex-doublequote1 sql (1+ pos) len params))
+               (lex-normal sql (1+ pos) len params))
               (t
                (lex-doublequote sql (1+ pos) len params))))))
-
-(defun lex-doublequote1 (sql pos len params)
-  (if (>= pos len)
-      params
-      (let ((c (char sql pos)))
-        (cond ((char= c #\")
-               (lex-doublequote sql (1+ pos) len params))
-              ((char= c #\')
-               (lex-quote sql (1+ pos) len params))
-              ((char= c #\:)
-               (lex-colon sql (1+ pos) len params pos))
-              (t
-               (lex-normal sql (1+ pos) len params))))))
 
 (defun lex-colon (sql pos len params start)
   (if (>= pos len)

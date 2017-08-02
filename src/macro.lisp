@@ -9,12 +9,11 @@
 @export
 (defmacro defsql (sql-name args &key sql-body sql-type &allow-other-keys)
   "define sql name and its args"
-  `(progn
-     (setf (gethash ',sql-name batis.sql:*SQL*)
-           (list :sql-body
-                 (lambda (&key ,@args &allow-other-keys)
-                   ,sql-body)
-                 :sql-type ,sql-type))))
+  `(defparameter
+       ,sql-name
+     (lambda (&key ,@args &allow-other-keys)
+       (declare (ignore ,@args))
+       ,sql-body)))
 
 @export
 (defmacro sql-condition (test-form sql-body)

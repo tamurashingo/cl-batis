@@ -8,7 +8,7 @@
 
 (cl-syntax:use-syntax :annot)
 
-(plan 11)
+(plan 9)
 
 ;; ----------------------------------------
 ;; SELECT param 1
@@ -18,15 +18,11 @@
                         " and product_name like :product_name "))
 (defsql fetch-product (product_name))
 
-(is (funcall (getf (gethash 'fetch-product batis.sql:*SQL*) :sql-body))
+(is (funcall fetch-product)
     " select * from product where valid_flag = '1' ")
 
-(is (funcall (getf (gethash 'fetch-product batis.sql:*SQL*) :sql-body)
-             :product_name "CommonLisp")
+(is (funcall fetch-product :product_name "CommonLisp")
     " select * from product where valid_flag = '1'  and product_name like :product_name ")
-
-(is (getf (gethash 'fetch-product batis.sql:*SQL*) :sql-type)
-    'select)
 
 
 ;; ----------------------------------------
@@ -41,19 +37,19 @@
 (defsql fetch-product2 (product_name product_price_low product_price_high))
 
 
-(is (funcall (getf (gethash 'fetch-product2 batis.sql:*SQL*) :sql-body))
+(is (funcall fetch-product2)
     " select * from product where valid_flag = '1' ")
 
-(is (funcall (getf (gethash 'fetch-product2 batis.sql:*SQL*) :sql-body)
+(is (funcall fetch-product2
              :product_name "CommonLisp")
     " select * from product where valid_flag = '1'  and product_name like :product_name ")
 
-(is (funcall (getf (gethash 'fetch-product2 batis.sql:*SQL*) :sql-body)
+(is (funcall fetch-product2
              :product_price_low 1000
              :product_price_high 2000)
     " select * from product where valid_flag = '1'  and product_price between :product_price_low and :product_price_high ")
 
-(is (funcall (getf (gethash 'fetch-product2 batis.sql:*SQL*) :sql-body)
+(is (funcall fetch-product2
              :product_price_low 1000
              :product_price_high 2000
              :product_name "CommonLisp")
@@ -73,23 +69,21 @@
 (defsql update-product (product_name product_price product_id))
 
 
-(is (funcall (getf (gethash 'update-product batis.sql:*SQL*) :sql-body)
+(is (funcall update-product
              :product_id 1)
     " update product set update_date = :update_date  where product_id = :product_id ")
 
-(is (funcall (getf (gethash 'update-product batis.sql:*SQL*) :sql-body)
+(is (funcall update-product
              :product_id 1
              :product_name "CLHS")
     " update product set update_date = :update_date  ,product_name = :product_name  where product_id = :product_id ")
 
-(is (funcall (getf (gethash 'update-product batis.sql:*SQL*) :sql-body)
+(is (funcall update-product
              :product_id 1
              :product_price 3000
              :product_name "CLHS")
     " update product set update_date = :update_date  ,product_name = :product_name  ,product_price = :product_price  where product_id = :product_id ")
 
 
-(is (getf (gethash 'update-product batis.sql:*SQL*) :sql-type)
-    'update)
-
 (finalize)
+
