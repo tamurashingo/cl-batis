@@ -19,13 +19,16 @@
   :author "tamura shingo"
   :license "MIT"
   :depends-on (:cl-dbi
+               :cl-dbi-connection-pool
                :cl-syntax
                :cl-syntax-annot)
   :components ((:module "src"
                 :components
-                ((:file "macro" :depends-on ("sql"))
+                ((:file "batis" :depends-on ("macro" "sqlparser" "sql" "datasource"))
+                 (:file "macro" :depends-on ("sql"))
                  (:file "sqlparser")
-                 (:file "sql"))))
+                 (:file "sql" :depends-on ("sqlparser" "datasource"))
+                 (:file "datasource"))))
   :description "SQL Mapping Framework for Common Lisp"
   :long-description
   #.(with-open-file (stream (merge-pathnames

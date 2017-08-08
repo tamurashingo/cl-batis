@@ -5,31 +5,92 @@
 
 ## Usage
 
-### Define SQL
+### create session
 
 ```common-lisp
-@select (
-         " select
-             product_id,
-             product_name,
-             product_price,
-             product_image,
-             product_url
-           from
-             product
-           where
-             valid_flag = '1' "
-           (sq-condition (not (null product_name))
-                         " and
-                             product_name like :product_name ")
-           (sql-condition (and (not (null price_low))
-                               (not (null price_high)))
-                          " and
-                              product_price between :price_row and :price_high ")
-           " order by
-               product_id
-             limit :limit ")
-(defsql fetch-product (product_name price_low price_high limit)"
+;; with CL-DBI connection
+(defparameter *conn-dbi* (dbi:connect :mysql
+                                      :database-name "batis"
+                                      :username "nobody"
+                                      :password "nobody"))
+(defparameter *session* (create-sql-session *conn-dbi*))
+
+
+;; with CL-DBI-Connection-Pool
+(defparameter *conn-pool* (dbi-cp:make-dbi-connection-pool :mysql
+                                                           :database-name "batis"
+                                                           :username "nobody"
+                                                           :password "nobody"))
+(defparameter *session* (create-sql-session *conn-pool*))
+
+;; direct
+(defparameter *session* (create-sql-session :mysql
+                                            :database-name "batis"
+                                            :username "nobody"
+                                            :password "nobody"))
+
+```
+
+### Define SQL
+
+There are two type of methods.
+
+- `@update`
+- `@select`
+
+Cl-Batis does not support DDL.
+If you want to use DDL, use `dbi:do-sql`.
+
+#### update
+
+```common-lisp
+@update ("insert into product (id, name, price) values (:id, :name, :price)")
+(defsql register-product (id name price))
+```
+
+#### select
+
+```common-lisp
+@select ("select name, price from product where id = :id")
+(defsql search-product (id))
+
+@select ("select id, name, price from product where 1 = 1"
+         (sql-condition (not (null name))
+                        " and name = :name ")
+         (sql-condition (not (null price_low))
+                        " and price >= :price_low ")
+         (sql-condition (not (null price_high))
+                        " and price <= :price_high ")
+         " order by id ")
+(defsql filter-product (name price_low price_high))
+```
+
+### execute
+
+#### update
+
+```common-lisp
+(update-one *session* register-product :id 1 :name "NES" :price 14800)
+```
+
+#### select
+
+```common-lisp
+(select-one *session* search-product :id 1)
+  -> (:|name| "NES" :|price| 14800))
+```
+
+```common-lisp
+(select-list *session* filter-product :price_low 20000)
+  ->((:|id| 2 :|name| "SNES" :|price| 25000)
+     (:|id| 3 :|name| "MEGA DRIVE" :|price| 21000)
+     (:|id| 4 :|name| "PC Engine" :|price| 24800)))
+```
+
+### release session
+
+```common-lisp
+(close-sql-session *session*)
 ```
 
 ## Databases
@@ -38,10 +99,10 @@
 * PostgreSQL
 * MySQL
 
-implemented by CL-DBI
 
 ## Installation
 
+This library will be available on Quicklisp when ready for use.
 
 ## Author
 

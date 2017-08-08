@@ -5,7 +5,7 @@
         :prove))
 (in-package :batis-test.sqlparser)
 
-(plan 7)
+(plan 8)
 
 (is (parse "select column from table")
     '(:SQL "select column from table"
@@ -26,6 +26,11 @@
     '(:SQL "select column from table where valid_flag = ?           and id = ?  "
       :ARGS (:VALID_FLAG :ID))
     "named parameters")
+
+(is (parse "insert into table (id, column, valid_flag) values (:id, :column, :valid_flag)")
+    '(:SQL "insert into table (id, column, valid_flag) values (?  , ?      , ?          )"
+      :ARGS (:ID :COLUMN :VALID_FLAG))
+    "update SQL")
 
 (is (parse
      "select
