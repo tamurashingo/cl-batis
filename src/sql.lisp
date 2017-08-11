@@ -4,7 +4,10 @@
         :cl-annot)
   (:import-from :batis.datasource
                 :<sql-session>
-                :connection)
+                :<sql-session-dbi>
+                :connection
+                :proxy
+                :<sql-session-dbi-cp>)
   (:import-from :batis.sqlparser
                 :parse))
 (in-package :batis.sql)
@@ -17,27 +20,35 @@
 
 @export
 (defmethod select-list ((session <sql-session>) sql-name &rest params &key &allow-other-keys)
-  (let* ((sql (apply sql-name params))
-         (parsed-sql (parse sql))
-         (params (create-params (getf parsed-sql :args) params)))
-    (select-list-dbi (connection session) (getf parsed-sql :sql) params)))
-
-
-(defmethod select-list-dbi ((conn dbi.driver::<dbi-connection>) sql params)
-  (let* ((query (dbi:prepare conn sql))
-         (result (apply #'dbi:execute query params)))
-    (dbi:fetch-all result)))
-
+  (multiple-value-bind (sql params) (gen-sql-params sql-name params)
+    (sql-execute session sql params)))
 
 @export
 (defmethod update-one ((session <sql-session>) sql-name &rest params &key &allow-other-keys)
+  (multiple-value-bind (sql params) (gen-sql-params sql-name params)
+    (sql-execute session sql params)))
+
+(defmethod sql-execute ((session <sql-session-dbi>) sql params)
+  ""
+  (let* ((conn (connection session))
+         (query (dbi:prepare conn sql))
+         (result (apply #'dbi:execute query params)))
+    (dbi:fetch-all result)))
+
+(defmethod sql-execute ((session <sql-session-dbi-cp>) sql params)
+  ""
+  (let* ((conn (proxy session))
+         (query (dbi-cp:prepare conn sql))
+         (result (apply #'dbi-cp:execute query params)))
+    (dbi-cp:fetch-all result)))
+
+
+(defun gen-sql-params (sql-name params)
+  "generate parameterized SQL and its parameters"
   (let* ((sql (apply sql-name params))
          (parsed-sql (parse sql))
          (params (create-params (getf parsed-sql :args) params)))
-    (let* ((query (dbi:prepare (connection session) (getf parsed-sql :sql)))
-           (result (apply #'dbi:execute query params)))
-      (dbi:fetch-all result))))
-
+    (values (getf parsed-sql :sql) params)))
 
 (defun create-params (named-params named-value)
   "create params to use execute method.
