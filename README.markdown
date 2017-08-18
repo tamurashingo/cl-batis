@@ -39,13 +39,28 @@ There are two type of methods.
 - `@select`
 
 Cl-Batis does not support DDL.
-If you want to use DDL, use `dbi:do-sql`.
+If you want to use DDL, use `do-sql`.
+
+```common-lisp
+(do-sql session "truncate table product")
+```
 
 #### update
 
 ```common-lisp
 @update ("insert into product (id, name, price) values (:id, :name, :price)")
 (defsql register-product (id name price))
+
+@update ("update
+            product "
+         (sql-set
+          (sql-cond (not (null name))
+                    " name = :name, ")
+          (sql-cond (not (null price))
+                    " price = :price "))
+         (sql-where
+          " id = :id "))
+(defsql update-product (id name price))
 ```
 
 #### select
@@ -54,18 +69,83 @@ If you want to use DDL, use `dbi:do-sql`.
 @select ("select name, price from product where id = :id")
 (defsql search-product (id))
 
-@select ("select id, name, price from product where 1 = 1"
-         (sql-condition (not (null name))
-                        " and name = :name ")
-         (sql-condition (not (null price_low))
-                        " and price >= :price_low ")
-         (sql-condition (not (null price_high))
-                        " and price <= :price_high ")
+@select ("select id, name, price from product"
+         (sql-where
+           (sql-cond (not (null name))
+                     " and name = :name ")
+           (sql-cond (not (null price_low))
+                     " and price >= :price_low ")
+           (sql-cond (not (null price_high))
+                     " and price <= :price_high "))
          " order by id ")
 (defsql filter-product (name price_low price_high))
 ```
 
-### execute
+#### where, set
+
+```common-lisp
+@select
+("select * from product where "
+ (sql-cond (not (null price))
+           " price = :price")
+ (sql-cond (not (null valid_flag))
+           " and valid_flag = :valid_flag"))
+(defsql search-by-price (price valid_flag))
+```
+
+In dynamic condition, if `sql-cond` returns nothing, you would end up with SQL that looked like this:
+
+```SQL
+select * from product where
+```
+
+This would fail.
+And, if only the second condition was met, you would end up with SQL that looked like this:
+
+```SQL
+select * from product where
+and valid_flag = '1'
+```
+
+This would also fail.
+
+
+So, `cl-batis` provides `SQL-WHERE` function.
+
+```common-lisp
+@select
+("select * from product"
+ (sql-where
+   (sql-cond (not (null price))
+    " price = :price")
+   (sql-cond (not (null valid_flag))
+    " and valid_flag = :valid_flag ")))
+(defsql search-by-product (price valid_flag))
+```
+
+The `SQL-WHERE` knows to only insert `WHERE` if there is any condition.
+Furthermore, if that content begins with `AND` or `OR`, strip it off.
+
+
+```common-lisp
+@update
+("update product"
+ (sql-set
+  (sql-cond (not (null price))
+            " price = :price, ")
+  (sql-cond (not (null name))
+            " name = :name "))
+ (sql-where
+  " id = :id "))
+(defsql update-product-info (id price name))
+```
+
+There is a similar solution for dynamic update statements called `SQL-SET`.
+The `SQL-SET` knows to strip last comma off.
+
+
+
+### Execute
 
 #### update
 
@@ -85,6 +165,14 @@ If you want to use DDL, use `dbi:do-sql`.
   ->((:|id| 2 :|name| "SNES" :|price| 25000)
      (:|id| 3 :|name| "MEGA DRIVE" :|price| 21000)
      (:|id| 4 :|name| "PC Engine" :|price| 24800)))
+```
+
+### transaction
+
+```common-lisp
+(commit *session*)
+
+(rollback *session*)
 ```
 
 ### release session

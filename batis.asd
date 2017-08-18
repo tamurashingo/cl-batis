@@ -20,6 +20,7 @@
   :license "MIT"
   :depends-on (:cl-dbi
                :cl-dbi-connection-pool
+               :cl-ppcre
                :cl-syntax
                :cl-syntax-annot)
   :components ((:module "src"
@@ -27,7 +28,8 @@
                 ((:file "batis" :depends-on ("macro" "sqlparser" "sql" "datasource"))
                  (:file "macro" :depends-on ("sql"))
                  (:file "sqlparser")
-                 (:file "sql" :depends-on ("sqlparser" "datasource"))
+                 (:file "dbi")
+                 (:file "sql" :depends-on ("sqlparser" "datasource" "dbi"))
                  (:file "datasource"))))
   :description "SQL Mapping Framework for Common Lisp"
   :long-description

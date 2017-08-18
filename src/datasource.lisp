@@ -7,8 +7,6 @@
 
 (cl-syntax:use-syntax :annot)
 
-@export
-@export-accessors
 (defclass <sql-session> ()
   ((connection :type dbi.driver::<dbi-connection>
                :initarg :connection
@@ -27,21 +25,45 @@
 
 @export
 (defmethod create-sql-session ((conn dbi.driver::<dbi-connection>) &key &allow-other-keys)
-  (make-instance '<sql-session-dbi>
-                 :connection conn))
+  (prog1
+      (make-instance '<sql-session-dbi>
+                     :connection conn)
+      (dbi:begin-transaction conn)))
 
 @export
 (defmethod create-sql-session ((connection-pool dbi-cp.connectionpool:<dbi-connection-pool>) &key &allo-other-keys)
   (let* ((connection-proxy (dbi-cp:get-connection connection-pool))
          (conn (dbi-cp.proxy:dbi-connection connection-proxy)))
-    (make-instance '<sql-session-dbi-cp>
-                   :connection conn
-                   :proxy connection-proxy)))
+    (prog1
+        (make-instance '<sql-session-dbi-cp>
+                       :connection conn
+                       :proxy connection-proxy)
+        (dbi-cp:begin-transaction connection-proxy))))
 
 @export
 (defmethod create-sql-session (driver-name &rest params &key database-name &allow-other-keys)
-  (make-instance '<sql-session-dbi>
-                 :connection (apply #'dbi:connect driver-name params)))
+  (let ((conn (apply #'dbi:connect driver-name params)))
+    (prog1
+        (make-instance '<sql-session-dbi>
+                       :connection conn)
+        (dbi:begin-transaction conn))))
+
+
+@export
+(defmethod commit ((session <sql-session-dbi>))
+  (dbi:commit (connection session)))
+
+@export
+(defmethod commit ((session <sql-session-dbi-cp>))
+  (dbi-cp:commit (proxy session)))
+
+@export
+(defmethod rollback ((session <sql-session-dbi>))
+  (dbi:rollback (connection session)))
+
+@export
+(defmethod rollback ((session <sql-session-dbi-cp>))
+  (dbi-cp:rollback (proxy session)))
 
 
 @export
@@ -51,4 +73,5 @@
 @export
 (defmethod close-sql-session ((session <sql-session-dbi-cp>))
   (dbi-cp:disconnect (proxy session)))
+
 

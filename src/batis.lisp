@@ -7,6 +7,8 @@
                 :<sql-session>
                 :connection
                 :create-sql-session
+                :commit
+                :rollback
                 :close-sql-session)
   (:import-from :batis.sqlparser
                 :parse)
@@ -16,12 +18,16 @@
                 :update-one)
   (:import-from :batis.macro
                 :defsql
-                :sql-condition
+                :sql-cond
                 :select
                 :update)
+  (:import-from :batis.dbi
+                :do-sql)
   (:export :<sql-session>
            :connection
            :create-sql-session
+           :commit
+           :rollback
            :close-sql-session
            :parse
            :select-one
@@ -30,6 +36,7 @@
            :defsql
            :sql-condition
            :select
-           :update))
+           :update
+           :do-sql))
 (in-package :batis)
 

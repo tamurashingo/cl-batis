@@ -14,6 +14,7 @@
 
 (cl-syntax:use-syntax :annot)
 
+
 @export
 (defmethod select-one ((session <sql-session>) sql-name &rest params &key &allow-other-keys)
   (car (apply #'select-list session sql-name params)))

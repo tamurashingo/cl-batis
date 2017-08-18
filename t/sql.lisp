@@ -3,6 +3,7 @@
   (:use :cl
         :batis.macro
         :batis.sql
+        :batis.dbi
         :prove))
 (in-package :batis-test.sql)
 
@@ -15,16 +16,14 @@
 
 ;; update product information
 @update ("update
-            product
-          set "
-         (sql-condition (not (null name))
-                        " name = :name ")
-         (sql-condition (and (not (null name))
-                             (not (null price)))
-                        ",")
-         (sql-condition (not (null price))
-                        " price = :price ")
-         " where id = :id ")
+            product "
+         (sql-set
+          (sql-cond (not (null name))
+                    " name = :name, ")
+          (sql-cond (not (null price))
+                    " price = :price "))
+         (sql-where
+          " id = :id "))
 (defsql update-product (id name price))
           
 
@@ -37,13 +36,14 @@
 (defsql show-all-product ())
 
 ;; search product with conditions
-@select ("select id, name, price from product where 1 = 1"
-         (sql-condition (not (null name))
-                        " and name = :name ")
-         (sql-condition (not (null price_low))
-                        " and price >= :price_low ")
-         (sql-condition (not (null price_high))
-                        " and price <= :price_high ")
+@select ("select id, name, price from product"
+         (sql-where
+          (sql-cond (not (null name))
+                    "     name = :name ")
+          (sql-cond (not (null price_low))
+                    " and price >= :price_low ")
+          (sql-cond (not (null price_high))
+                    " and price <= :price_high "))
          " order by id ")
 (defsql filter-product (name price_low price_high))
 
@@ -53,9 +53,8 @@
 ;; create table
 ;; ----------------------------------------
 (defun reset-table (session)
-  (let ((conn (batis.datasource:connection session)))
-    (dbi:do-sql conn "drop table if exists product")
-    (dbi:do-sql conn "create table product (id integer primary key, name varchar(20) not null, price integer not null)")))
+  (do-sql session "drop table if exists product")
+  (do-sql session "create table product (id integer primary key, name varchar(20) not null, price integer not null)"))
 
 
 ;; ----------------------------------------

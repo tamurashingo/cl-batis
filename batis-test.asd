@@ -18,7 +18,8 @@
                 ((:test-file "macro")
                  (:test-file "sqlparser")
                  (:test-file "datasource")
-                 (:test-file "sql"))))
+                 (:test-file "sql")
+                 (:test-file "transaction"))))
   :description "Test system for CL-BATIS"
 
   :defsystem-depends-on (:prove-asdf)

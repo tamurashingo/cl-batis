@@ -16,15 +16,44 @@
        ,sql-body)))
 
 @export
-(defmacro sql-condition (test-form sql-body)
+(defmacro sql-cond (test-form sql-body)
   "apply sql-body when test-form is true
 
 Example:
-  (sql-condition (not (null product_name))
-                 \" and product_name like :product_name \")"
+  (sql-cond (not (null product_name))
+            \" and product_name like :product_name \")"
   `(if (funcall (lambda () ,test-form))
        ,sql-body
-       ""))
+       NIL))
+
+(defun trim-first-and-or (condition)
+  (ppcre:regex-replace "^\\s*([Aa][Nn][Dd]|[Oo][Rr])\\s" condition " "))
+
+@export
+(defun sql-where (&rest conditions)
+  "insert `WHERE` if there is any condition.
+Furthermore, if that content begins with `AND` or `OR`, strip it off."
+  (let ((conds (remove-if #'null conditions)))
+    (if (null conds)
+        ""
+        (progn
+          (setf (car conds) (trim-first-and-or (car conds)))
+          (format NIL " where ~{ ~A~}" conds)))))
+
+(defun trim-last-comma (column)
+  (ppcre:regex-replace "\\,\\s*$" column " "))
+
+@export
+(defun sql-set (&rest columns)
+  "insert `SET`.
+Furthermore, if that content ends with `,`, strip it off."
+  (let* ((cols (remove-if #'null columns))
+         (lst (1- (length cols))))
+    (if (null cols)
+        ""
+        (progn
+          (setf (elt cols lst) (trim-last-comma (elt cols lst)))
+          (format NIL " set ~{~A~}" cols)))))
 
 @export
 (defannotation select (sql-form def-form)
@@ -33,8 +62,8 @@ Example:
 
 Example:
   @select (\"select * from product where valid_flag = '1' \"
-           (sql-condition (not (null product_name))
-                          \" and product_name like :product_name \"))
+           (sql-cond (not (null product_name))
+                     \" and product_name like :product_name \"))
   (defsql fetch-product (product_name))"
   (when (not (and (listp def-form)
                   (eq (car def-form) 'defsql)))

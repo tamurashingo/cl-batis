@@ -21,11 +21,11 @@
 
 ;; CL-DBI
 (defparameter *session* (create-sql-session *conn-dbi*))
-(is-type *session* '<sql-session>
+(is-type *session* 'batis.datasource::<sql-session>
          "class of <sql-session>")
 (is-type *session* 'batis.datasource::<sql-session-dbi>
          "class of <sql-session-dbi")
-(is-type (connection *session*)
+(is-type (batis.datasource::connection *session*)
          'dbi.driver::<dbi-connection>
          "have a connection")
 (close-sql-session *session*)
@@ -33,11 +33,11 @@
 
 ;; CL-DBI-Connection-Pool
 (defparameter *session* (create-sql-session *conn-pool*))
-(is-type *session* '<sql-session>
+(is-type *session* 'batis.datasource::<sql-session>
          "class of <sql-session>")
 (is-type *session* 'batis.datasource::<sql-session-dbi-cp>
          "class of <sql-session-dbi-cp>")
-(is-type (connection *session*)
+(is-type (batis.datasource::connection *session*)
          'dbi.driver::<dbi-connection>
          "have a connection")
 (is-type (batis.datasource::proxy *session*)
@@ -51,11 +51,11 @@
                                             :database-name "batis"
                                             :username "nobody"
                                             :password "nobody"))
-(is-type *session* '<sql-session>
+(is-type *session* 'batis.datasource::<sql-session>
          "class of <sql-session>")
 (is-type *session* 'batis.datasource::<sql-session-dbi>
          "class of <sql-session-dbi>")
-(is-type (connection *session*)
+(is-type (batis.datasource::connection *session*)
          'dbi.driver::<dbi-connection>
          "have a connection")
 (close-sql-session *session*)
