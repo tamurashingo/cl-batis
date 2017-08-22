@@ -1,10 +1,7 @@
 (in-package :cl-user)
 (defpackage batis-test.transaction
   (:use :cl
-        :batis.macro
-        :batis.datasource
-        :batis.sql
-        :batis.dbi
+        :batis
         :prove))
 (in-package :batis-test.transaction)
 
