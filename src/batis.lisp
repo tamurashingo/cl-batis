@@ -18,6 +18,8 @@
                 :update-one)
   (:import-from :batis.macro
                 :defsql
+                :sql-where
+                :sql-set
                 :sql-cond
                 :select
                 :update)
@@ -34,7 +36,9 @@
            :select-list
            :update-one
            :defsql
-           :sql-condition
+           :sql-where
+           :sql-set
+           :sql-cond
            :select
            :update
            :do-sql))
