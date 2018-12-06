@@ -37,7 +37,7 @@ Cl-Batis does not support DDL.
 If you want to use DDL, use `do-sql`.
 
 ```common-lisp
-(batis:do-sql session "truncate table product")
+(do-sql session "truncate table product")
 ```
 
 ### Define SQL
