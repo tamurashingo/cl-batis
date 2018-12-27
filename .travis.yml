@@ -14,18 +14,11 @@ env:
   matrix:
     - LISP=sbcl-bin
     - LISP=ccl-bin
-    - LISP=clisp
-
-matrix:
-  allow_failures:
-    - env: LISP=clisp
 
 install:
   # Install Roswell
   - curl -L https://raw.githubusercontent.com/roswell/roswell/release/scripts/install-for-ci.sh | sh
   - ros install prove
-  - ros install qlot
-  - qlot install
 
 before_script:
   - mysql -uroot -e 'GRANT ALL ON *.* TO nobody@"localhost" IDENTIFIED BY "nobody"'

@@ -300,7 +300,11 @@ CL-USER> (select-list session select-product-by-name-or-price :name "PC Engine")
 
 ## Installation
 
-This library will be available on Quicklisp when ready for use.
+This library is available on Quicklisp.
+
+```commonlisp
+(ql:quickload :cl-batis)
+```
 
 ## Author
 
