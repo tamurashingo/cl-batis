@@ -33,14 +33,14 @@
   ""
   (let* ((conn (connection session))
          (query (dbi:prepare conn sql))
-         (result (apply #'dbi:execute query params)))
+         (result (dbi:execute query params)))
     (dbi:fetch-all result)))
 
 (defmethod sql-execute ((session <sql-session-dbi-cp>) sql params)
   ""
   (let* ((conn (proxy session))
          (query (dbi-cp:prepare conn sql))
-         (result (apply #'dbi-cp:execute query params)))
+         (result (dbi-cp:execute query params)))
     (dbi-cp:fetch-all result)))
 
 

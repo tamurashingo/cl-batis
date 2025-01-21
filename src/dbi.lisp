@@ -8,7 +8,7 @@
 (cl-syntax:use-syntax :annot)
 
 @export
-(defmethod do-sql ((session <sql-session>) sql &rest params)
+(defmethod do-sql ((session <sql-session>) sql &optional params)
   (let ((conn (batis.datasource::connection session)))
-    (apply #'dbi:do-sql conn sql params)))
+    (dbi:do-sql conn sql params)))
 
