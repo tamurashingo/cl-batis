@@ -11,7 +11,7 @@
   ((connection :type dbi.driver::<dbi-connection>
                :initarg :connection
                :accessor connection
-               :initform NIL)))
+               :initform (error "missing initarg"))))
 
 (defclass <sql-session-dbi> (<sql-session>)
   ())
@@ -20,7 +20,7 @@
   ((proxy :type dbi-cp.proxy::<dbi-connection-proxy>
           :initarg :proxy
           :accessor proxy
-          :initform NIL)))
+          :initform (error "missing initarg"))))
 
 
 @export
@@ -31,7 +31,7 @@
       (dbi:begin-transaction conn)))
 
 @export
-(defmethod create-sql-session ((connection-pool dbi-cp.connectionpool:<dbi-connection-pool>) &key &allo-other-keys)
+(defmethod create-sql-session ((connection-pool dbi-cp.connectionpool:<dbi-connection-pool>) &key &allow-other-keys)
   (let* ((connection-proxy (dbi-cp:get-connection connection-pool))
          (conn (dbi-cp.proxy:dbi-connection connection-proxy)))
     (prog1
@@ -42,6 +42,7 @@
 
 @export
 (defmethod create-sql-session (driver-name &rest params &key database-name &allow-other-keys)
+  (declare (ignore database-name))
   (let ((conn (apply #'dbi:connect driver-name params)))
     (prog1
         (make-instance '<sql-session-dbi>
