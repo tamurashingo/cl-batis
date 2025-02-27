@@ -9,6 +9,7 @@
 @export
 (defmacro defsql (sql-name args &key sql-body sql-type &allow-other-keys)
   "define sql name and its args"
+  (declare (ignore sql-type))
   `(defparameter
        ,sql-name
      (lambda (&key ,@args &allow-other-keys)
