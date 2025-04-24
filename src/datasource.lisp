@@ -27,8 +27,8 @@
 (defmethod create-sql-session ((conn dbi.driver::<dbi-connection>) &key &allow-other-keys)
   (prog1
       (make-instance '<sql-session-dbi>
-                     :connection conn)
-      (dbi:begin-transaction conn)))
+                     :connection conn)))
+
 
 @export
 (defmethod create-sql-session ((connection-pool dbi-cp.connectionpool:<dbi-connection-pool>) &key &allow-other-keys)
@@ -37,8 +37,8 @@
     (prog1
         (make-instance '<sql-session-dbi-cp>
                        :connection conn
-                       :proxy connection-proxy)
-        (dbi-cp:begin-transaction connection-proxy))))
+                       :proxy connection-proxy))))
+
 
 @export
 (defmethod create-sql-session (driver-name &rest params &key database-name &allow-other-keys)
@@ -46,9 +46,14 @@
   (let ((conn (apply #'dbi:connect driver-name params)))
     (prog1
         (make-instance '<sql-session-dbi>
-                       :connection conn)
-        (dbi:begin-transaction conn))))
+                       :connection conn))))
 
+@export
+(defmacro with-transaction (session &body body)
+  (let ((conn-var (gensym "CONN-VAR")))
+    `(let ((,conn-var (batis.datasource::connection ,session)))
+       (dbi:with-transaction ,conn-var
+         ,@body))))
 
 @export
 (defmethod commit ((session <sql-session-dbi>))

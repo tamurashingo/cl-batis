@@ -7,6 +7,7 @@
                 :<sql-session>
                 :connection
                 :create-sql-session
+                :with-transaction
                 :commit
                 :rollback
                 :close-sql-session)
@@ -28,6 +29,7 @@
   (:export :<sql-session>
            :connection
            :create-sql-session
+           :with-transaction
            :commit
            :rollback
            :close-sql-session
