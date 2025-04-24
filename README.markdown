@@ -1,7 +1,6 @@
 # Cl-Batis - SQL Mapping Framework for Common Lisp
 
-[![Build Status](https://travis-ci.org/tamurashingo/cl-batis.svg?branch=master)](https://travis-ci.org/tamurashingo/cl-batis)
-
+![ci workflow](https://github.com/tamurashingo/cl-batis/actions/workflows/ci.yml/badge.svg)
 
 ## Usage
 
