@@ -12,17 +12,23 @@
   :author "tamura shingo"
   :license "MIT"
   :depends-on (:batis
-               :prove)
+               :rove)
   :components ((:module "t"
                 :components
-                ((:test-file "macro")
-                 (:test-file "sqlparser")
-                 (:test-file "datasource")
-                 (:test-file "sql")
-                 (:test-file "transaction"))))
+                ((:file "macro")
+                 (:file "sqlparser")
+                 (:file "datasource")
+                 (:module "sql"
+                  :components
+                  ((:file "sqlite3-sql")
+                   (:file "mysql-sql")
+                   (:file "postgresql-sql")))
+                 (:module "transaction"
+                  :components
+                  ((:file "sqlite3-transaction")
+                   (:file "mysql-transaction")
+                   (:file "postgresql-transaction")
+                  )))))
   :description "Test system for CL-BATIS"
-
-  :defsystem-depends-on (:prove-asdf)
-  :perform (test-op :after (op c)
-                    (funcall (intern #.(string :run-test-system) :prove-asdf) c)
-                    (asdf:clear-system c)))
+  :perform (test-op (op c)
+                    (uiop:symbol-call :rove :run c)))

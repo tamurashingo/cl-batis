@@ -1,0 +1,9 @@
+services:
+  batis-test:
+    image: batis-test
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: batis_test
+    volumes:
+      - ./:/app
