@@ -173,11 +173,33 @@ The `SQL-SET` knows to strip last comma off.
 
 ### transaction
 
-```common-lisp
-(commit *session*)
 
-(rollback *session*)
+When exiting the `transaction-macro` block, it will automatically commit.
+
+```common-lisp
+(with-transaction *session*
+  ; blah blah blah
+)
 ```
+
+
+To explicitly commit, use `commit`.
+
+```common-lisp
+(with-transaction *session*
+  (update-one *session* register-product :id 1 :name "NES" :price 14800)
+  (commit *session*))
+```
+
+You can roll back using `rollback`.
+
+```common-lisp
+(with-transaction *session*
+  ;blah
+  ;blah
+  ;blah
+  (rollback *session*))
+  ```
 
 ### release session
 
@@ -300,11 +322,10 @@ CL-USER> (select-list session select-product-by-name-or-price :name "PC Engine")
 
 ## Installation
 
-This library is available on Quicklisp.
+~~This library is available on Quicklisp.~~
 
-```commonlisp
-(ql:quickload :cl-batis)
-```
+use qlot.
+
 
 ## Author
 
@@ -312,7 +333,7 @@ This library is available on Quicklisp.
 
 ## Copyright
 
-Copyright (c) 2017 tamura shingo (tamura.shingo@gmail.com)
+Copyright (c) 2017, 2024, 2025 tamura shingo (tamura.shingo@gmail.com)
 
 ## License
 
