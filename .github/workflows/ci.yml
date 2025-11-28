@@ -16,4 +16,4 @@ jobs:
         run: docker compose up -d
 
       - name: Test
-        run: docker compose -f docker-compose.test-runner.yml run --rm --entrypoint rove batis-test exec batis-test.asd
+        run: docker compose -f docker-compose.test-runner.yml run --rm --entrypoint rove batis-test batis-test.asd
