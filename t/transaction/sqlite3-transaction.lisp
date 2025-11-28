@@ -12,9 +12,9 @@
 
 (setup
   (setf *session-sqlite31* (batis.datasource:create-sql-session :sqlite3
-                                                                :database-name "/app/volumes/batis_test.sqlite3"))
+                                                                :database-name "/volumes/batis_test.sqlite3"))
   (setf *session-sqlite32* (batis.datasource:create-sql-session :sqlite3
-                                                                :database-name "/app/volumes/batis_test.sqlite3"))
+                                                                :database-name "/volumes/batis_test.sqlite3"))
 
   (do-sql *session-sqlite31* "create table book (id integer primary key, name varchar(20) not null, price integer not null)"))
 

@@ -15,8 +15,5 @@ jobs:
       - name: Build
         run: docker compose up -d
 
-      - name: install
-        run: docker compose -f docker-compose.test-runner.yml run --rm --entrypoint qlot batis-test install
-
       - name: Test
-        run: docker compose -f docker-compose.test-runner.yml run --rm --entrypoint qlot batis-test exec rove batis-test.asd
+        run: docker compose -f docker-compose.test-runner.yml run --rm --entrypoint rove batis-test batis-test.asd

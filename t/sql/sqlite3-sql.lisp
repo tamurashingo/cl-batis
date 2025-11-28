@@ -13,7 +13,7 @@
 
 (setup
   (setf *session-sqlite3* (batis.datasource:create-sql-session :sqlite3
-                                                               :database-name "/app/volumes/batis_test.sqlite3"))
+                                                               :database-name "/volumes/batis_test.sqlite3"))
   (do-sql *session-sqlite3* "drop table if exists product")
   (do-sql *session-sqlite3* "create table product (id integer primary key, name varchar(20) not null, price integer not null)"))
 

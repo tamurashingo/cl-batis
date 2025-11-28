@@ -8,21 +8,13 @@ setup:
 test.prev:
 	docker-compose down || true
 	docker-compose -f docker-compose.test-runner.yml run --rm --entrypoint rm batis-test -rf ./volumes
-#	rm -rf ./volumes
-	mkdir ./volumes
-	mkdir ./volumes/mysql
-	mkdir ./volumes/postgresql
-	mkdir ./volumes/postgresql/data
-	mkdir ./volumes/postgresql/log
-	sleep 1
 	docker-compose up -d
 	echo wait...
 	sleep 10
 
 test: test.prev
 	@echo "Running tests..."
-	docker-compose -f docker-compose.test-runner.yml run --rm --entrypoint qlot batis-test install
-	docker-compose -f docker-compose.test-runner.yml run --rm --entrypoint qlot batis-test exec rove batis-test.asd
+	docker-compose -f docker-compose.test-runner.yml run --rm --entrypoint rove batis-test batis-test.asd
 
 test.down:
 	docker-compose down
