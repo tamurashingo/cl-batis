@@ -7,14 +7,23 @@
 (cl-syntax:use-syntax :annot)
 
 @export
+(defclass <batis-sql> ()
+  ((gen-sql-fn :type function
+               :initarg :gen-sql-fn
+               :initform (error "missing gen-sql-fn"))
+   (sql-type :type keyword
+             :initarg :sql-type)))
+
+@export
 (defmacro defsql (sql-name args &key sql-body sql-type &allow-other-keys)
   "define sql name and its args"
   (declare (ignore sql-type))
   `(defparameter
        ,sql-name
-     (lambda (&key ,@args &allow-other-keys)
-       (declare (ignore ,@args))
-       ,sql-body)))
+     (make-instance '<batis-sql> :gen-sql-fn (lambda (&key ,@args &allow-other-keys)
+                                               (declare (ignore ,@args))
+                                               ,sql-body)
+                                 :sql-type ,sql-type)))
 
 @export
 (defmacro sql-cond (test-form sql-body)

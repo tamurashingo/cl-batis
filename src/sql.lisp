@@ -9,7 +9,9 @@
                 :proxy
                 :<sql-session-dbi-cp>)
   (:import-from :batis.sqlparser
-                :parse))
+                :parse)
+  (:import-from :batis.macro
+                :<batis-sql>))
 (in-package :batis.sql)
 
 (cl-syntax:use-syntax :annot)
@@ -17,16 +19,19 @@
 
 @export
 (defmethod select-one ((session <sql-session>) sql-name &rest params &key &allow-other-keys)
+  (warn "SELECT-ONE is deprecated and will be removed in a future version.")
   (car (apply #'select-list session sql-name params)))
 
 @export
 (defmethod select-list ((session <sql-session>) sql-name &rest params &key &allow-other-keys)
-  (multiple-value-bind (sql params) (gen-sql-params sql-name params)
+  (warn "SELECT-LIST is deprecated and will be removed in a future version.")
+  (multiple-value-bind (sql params) (gen-sql-and-params sql-name params)
     (sql-execute session sql params)))
 
 @export
 (defmethod update-one ((session <sql-session>) sql-name &rest params &key &allow-other-keys)
-  (multiple-value-bind (sql params) (gen-sql-params sql-name params)
+  (warn "UPDATE-ONE is deprecated and will be removed in a future version.")
+  (multiple-value-bind (sql params) (gen-sql-and-params sql-name params)
     (sql-execute session sql params)))
 
 (defmethod sql-execute ((session <sql-session-dbi>) sql params)
@@ -44,9 +49,11 @@
     (dbi-cp:fetch-all result)))
 
 
-(defun gen-sql-params (sql-name params)
+@export
+(defmethod gen-sql-and-params ((sql-name <batis-sql>) params)
   "generate parameterized SQL and its parameters"
-  (let* ((sql (apply sql-name params))
+  (let* ((sql-fn (slot-value sql-name 'batis.macro::gen-sql-fn))
+         (sql (apply sql-fn params))
          (parsed-sql (parse sql))
          (params (create-params (getf parsed-sql :args) params)))
     (values (getf parsed-sql :sql) params)))

@@ -9,6 +9,7 @@
 
 @export
 (defmethod do-sql ((session <sql-session>) sql &optional params)
+  (warn "DO-SQL is deprecated and will be removed in a future version.")
   (let ((conn (batis.datasource::connection session)))
     (dbi:do-sql conn sql params)))
 

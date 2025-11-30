@@ -2,51 +2,21 @@
 
 ![ci workflow](https://github.com/tamurashingo/cl-batis/actions/workflows/ci.yml/badge.svg)
 
+## Overview
+
+Cl-Batis is a library for generating prepared statement queries and their parameters.
+This library focuses on SQL definition and generation, delegating query execution to other libraries.
+
 ## Usage
-
-### create session
-
-```common-lisp
-;; with CL-DBI connection
-(defparameter *conn-dbi* (dbi:connect :mysql
-                                      :database-name "batis"
-                                      :username "nobody"
-                                      :password "nobody"))
-(defparameter *session* (create-sql-session *conn-dbi*))
-
-
-;; with CL-DBI-Connection-Pool
-(defparameter *conn-pool* (dbi-cp:make-dbi-connection-pool :mysql
-                                                           :database-name "batis"
-                                                           :username "nobody"
-                                                           :password "nobody"))
-(defparameter *session* (create-sql-session *conn-pool*))
-
-;; direct
-(defparameter *session* (create-sql-session :mysql
-                                            :database-name "batis"
-                                            :username "nobody"
-                                            :password "nobody"))
-
-```
-
-### how to do DDL
-
-Cl-Batis does not support DDL.
-If you want to use DDL, use `do-sql`.
-
-```common-lisp
-(do-sql session "truncate table product")
-```
 
 ### Define SQL
 
-There are two type of methods.
+There are two types of methods for defining SQL:
 
-- `update`
-- `select`
+- `update` - for INSERT, UPDATE, DELETE statements
+- `select` - for SELECT statements
 
-when use `(cl-syntax:use-syntax :annot)`, `@update` and `@select` can be used.
+When using `(cl-syntax:use-syntax :annot)`, `@update` and `@select` annotations can be used.
 
 #### update
 
@@ -84,19 +54,25 @@ when use `(cl-syntax:use-syntax :annot)`, `@update` and `@select` can be used.
 (defsql filter-product (name price_low price_high))
 ```
 
-#### where, set
+### Generate SQL and Parameters
+
+Use `gen-sql-and-params` to generate the prepared statement SQL and its parameters:
 
 ```common-lisp
-@select
-("select * from product where "
- (sql-cond (not (null price))
-           " price = :price")
- (sql-cond (not (null valid_flag))
-           " and valid_flag = :valid_flag"))
-(defsql search-by-price (price valid_flag))
+(gen-sql-and-params register-product :id 1 :name "NES" :price 14800)
+; => "insert into product (id, name, price) values (?, ?, ?)"
+;    (1 "NES" 14800)
+
+(gen-sql-and-params filter-product :name nil :price_low 20000 :price_high nil)
+; => "select id, name, price from product WHERE price >= ? order by id "
+;    (20000)
 ```
 
-In dynamic condition, if `sql-cond` returns nothing, you would end up with SQL that looked like this:
+### Dynamic Conditions
+
+#### where, set
+
+In dynamic conditions, if `sql-cond` returns nothing, you would end up with SQL that looked like this:
 
 ```SQL
 select * from product where
@@ -113,7 +89,7 @@ and valid_flag = '1'
 This would also fail.
 
 
-So, `cl-batis` provides `SQL-WHERE` function.
+So, `cl-batis` provides `sql-where` function.
 
 ```common-lisp
 @select
@@ -126,8 +102,8 @@ So, `cl-batis` provides `SQL-WHERE` function.
 (defsql search-by-product (price valid_flag))
 ```
 
-The `SQL-WHERE` knows to only insert `WHERE` if there is any condition.
-Furthermore, if that content begins with `AND` or `OR`, strip it off.
+The `sql-where` knows to only insert `WHERE` if there is any condition.
+Furthermore, if that content begins with `AND` or `OR`, it strips it off.
 
 
 ```common-lisp
@@ -143,10 +119,69 @@ Furthermore, if that content begins with `AND` or `OR`, strip it off.
 (defsql update-product-info (id price name))
 ```
 
-There is a similar solution for dynamic update statements called `SQL-SET`.
-The `SQL-SET` knows to strip last comma off.
+There is a similar solution for dynamic update statements called `sql-set`.
+The `sql-set` knows to strip the last comma off.
+
+## Installation
+
+~~This library is available on Quicklisp.~~
+
+use qlot.
 
 
+## Author
+
+* tamura shingo (tamura.shingo@gmail.com)
+
+## Copyright
+
+Copyright (c) 2017, 2024, 2025 tamura shingo (tamura.shingo@gmail.com)
+
+## License
+
+Licensed under the MIT License.
+
+---
+
+## Deprecated Features (for backward compatibility)
+
+The following features are deprecated and will be removed in a future version.
+These features were related to session management and SQL execution, which are now delegated to other libraries.
+
+### create session
+
+```common-lisp
+;; with CL-DBI connection
+(defparameter *conn-dbi* (dbi:connect :mysql
+                                      :database-name "batis"
+                                      :username "nobody"
+                                      :password "nobody"))
+(defparameter *session* (create-sql-session *conn-dbi*))
+
+
+;; with CL-DBI-Connection-Pool
+(defparameter *conn-pool* (dbi-cp:make-dbi-connection-pool :mysql
+                                                           :database-name "batis"
+                                                           :username "nobody"
+                                                           :password "nobody"))
+(defparameter *session* (create-sql-session *conn-pool*))
+
+;; direct
+(defparameter *session* (create-sql-session :mysql
+                                            :database-name "batis"
+                                            :username "nobody"
+                                            :password "nobody"))
+
+```
+
+### how to do DDL
+
+Cl-Batis does not support DDL.
+If you want to use DDL, use `do-sql`.
+
+```common-lisp
+(do-sql session "truncate table product")
+```
 
 ### Execute
 
@@ -198,7 +233,7 @@ You can roll back using `rollback`.
   ;blah
   ;blah
   (rollback *session*))
-  ```
+```
 
 ### release session
 
@@ -206,13 +241,13 @@ You can roll back using `rollback`.
 (close-sql-session *session*)
 ```
 
-## Databases
+### Databases
 
 * SQLite3
 * PostgreSQL
 * MySQL
 
-## Example
+### Example
 
 ```common-lisp
 ;;;
@@ -318,22 +353,3 @@ CL-USER> (select-list session select-product-by-name-or-price :price_low 20000 :
 CL-USER> (select-list session select-product-by-name-or-price :name "PC Engine")
 ((:|name| "PC Engine" :|price| 24800))
 ```
-
-## Installation
-
-~~This library is available on Quicklisp.~~
-
-use qlot.
-
-
-## Author
-
-* tamura shingo (tamura.shingo@gmail.com)
-
-## Copyright
-
-Copyright (c) 2017, 2024, 2025 tamura shingo (tamura.shingo@gmail.com)
-
-## License
-
-Licensed under the MIT License.
