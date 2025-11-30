@@ -36,6 +36,7 @@
            :sql-cond
            :select
            :update
+           :parse
 
            ;; deprecated symbols
            :<sql-session>
@@ -45,7 +46,6 @@
            :commit
            :rollback
            :close-sql-session
-           :parse
            :select-one
            :select-list
            :update-one

@@ -19,15 +19,18 @@
 
 @export
 (defmethod select-one ((session <sql-session>) sql-name &rest params &key &allow-other-keys)
+  (warn "SELECT-ONE is deprecated and will be removed in a future version.")
   (car (apply #'select-list session sql-name params)))
 
 @export
 (defmethod select-list ((session <sql-session>) sql-name &rest params &key &allow-other-keys)
+  (warn "SELECT-LIST is deprecated and will be removed in a future version.")
   (multiple-value-bind (sql params) (gen-sql-and-params sql-name params)
     (sql-execute session sql params)))
 
 @export
 (defmethod update-one ((session <sql-session>) sql-name &rest params &key &allow-other-keys)
+  (warn "UPDATE-ONE is deprecated and will be removed in a future version.")
   (multiple-value-bind (sql params) (gen-sql-and-params sql-name params)
     (sql-execute session sql params)))
 
