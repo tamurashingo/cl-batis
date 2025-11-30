@@ -14,10 +14,12 @@
   (:import-from :batis.sqlparser
                 :parse)
   (:import-from :batis.sql
+                :gen-sql-and-params
                 :select-one
                 :select-list
                 :update-one)
   (:import-from :batis.macro
+                :<batis-sql>
                 :defsql
                 :sql-where
                 :sql-set
@@ -26,7 +28,17 @@
                 :update)
   (:import-from :batis.dbi
                 :do-sql)
-  (:export :<sql-session>
+  (:export :<batis-sql>
+           :gen-sql-and-params
+           :defsql
+           :sql-where
+           :sql-set
+           :sql-cond
+           :select
+           :update
+
+           ;; deprecated symbols
+           :<sql-session>
            :connection
            :create-sql-session
            :with-transaction
@@ -37,12 +49,6 @@
            :select-one
            :select-list
            :update-one
-           :defsql
-           :sql-where
-           :sql-set
-           :sql-cond
-           :select
-           :update
            :do-sql))
 (in-package :batis)
 

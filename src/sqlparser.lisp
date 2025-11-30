@@ -57,7 +57,7 @@
       (push (list start pos)
             params)
       (let ((c (char sql pos)))
-        (cond ((find c "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789")
+        (cond ((find c "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-0123456789")
                (lex-colon sql (1+ pos) len params start))
               ((or (char= c #\Space)
                    (char= c #\Tab)

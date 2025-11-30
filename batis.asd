@@ -26,10 +26,10 @@
   :components ((:module "src"
                 :components
                 ((:file "batis" :depends-on ("macro" "sqlparser" "sql" "datasource"))
-                 (:file "macro" :depends-on ("sql"))
+                 (:file "macro")
                  (:file "sqlparser")
                  (:file "dbi")
-                 (:file "sql" :depends-on ("sqlparser" "datasource" "dbi"))
+                 (:file "sql" :depends-on ("sqlparser" "datasource" "dbi" "macro"))
                  (:file "datasource"))))
   :description "SQL Mapping Framework for Common Lisp"
   :long-description
