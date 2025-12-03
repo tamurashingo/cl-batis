@@ -35,7 +35,7 @@
 
   (multiple-value-bind (sql params)
       (gen-sql-and-params fetch-product '(:product-name "CommonLisp"))
-    (ok (string= " select * from product  where   valid_flag = '1'   and product_name like ?             " sql))
+    (ok (string= " select * from product  where   valid_flag = '1'   and product_name like             ? " sql))
     (ok (equal '("CommonLisp") params))))
 
 ;; ----------------------------------------
@@ -60,14 +60,14 @@
 
   (multiple-value-bind (sql params)
       (gen-sql-and-params fetch-product2 '(:product-name "CommonLisp"))
-    (ok (string= " select * from product  where   product_name like ?             " sql))
+    (ok (string= " select * from product  where   product_name like             ? " sql))
     (ok (equal '("CommonLisp") params)))
 
   (multiple-value-bind (sql params)
       (gen-sql-and-params fetch-product2 '(:valid-flag 1
                                            :product-price-low 1000
                                            :product-price-high 2000))
-    (ok (string= " select * from product  where   valid_flag = ?             and product_price between ?                  and ?                   " sql))
+    (ok (string= " select * from product  where   valid_flag =           ?   and product_price between                  ? and                   ? " sql))
     (ok (equal '(1 1000 2000) params)))
 
   (multiple-value-bind (sql params)
@@ -75,7 +75,7 @@
                                            :product-price-low 1000
                                            :product-price-high 2000
                                            :product-name "CommonLisp"))
-    (ok (string= " select * from product  where   valid_flag = ?             and product_name like ?               and product_price between ?                  and ?                   " sql))
+    (ok (string= " select * from product  where   valid_flag =           ?   and product_name like             ?   and product_price between                  ? and                   ? " sql))
     (ok (equal '(1 "CommonLisp" 1000 2000) params))))
 
 
@@ -98,14 +98,14 @@
   (multiple-value-bind (sql params)
       (gen-sql-and-params update-product '(:update-date "2025-01-01"
                                            :product-id 1))
-    (ok (string= " update product  set  update_date = ?             where  product_id = ?           " sql))
+    (ok (string= " update product  set  update_date =            ?  where  product_id =           ? " sql))
     (ok (equal '("2025-01-01" 1) params)))
 
   (multiple-value-bind (sql params)
       (gen-sql-and-params update-product '(:update-date "2025-01-01"
                                            :product-id 1
                                            :product-name "CLHS"))
-    (ok (string= " update product  set  update_date = ?           ,  product_name = ?              where  product_id = ?           " sql))
+    (ok (string= " update product  set  update_date =            ?,  product_name =             ?  where  product_id =           ? " sql))
     (ok (equal '("2025-01-01" "CLHS" 1) params)))
 
   (multiple-value-bind (sql params)
@@ -113,6 +113,19 @@
                                            :product-id 1
                                            :product-price 3000
                                            :product-name "CLHS"))
-    (ok (string= " update product  set  update_date = ?           ,  product_name = ?            ,  product_price = ?               where  product_id = ?           " sql))
+    (ok (string= " update product  set  update_date =            ?,  product_name =             ?,  product_price =              ?  where  product_id =           ? " sql))
     (ok (equal '("2025-01-01" "CLHS" 3000 1) params))))
+
+
+;; ----------------------------------------
+;; PostgreSQL :: CAST
+;; ----------------------------------------
+@select (" select * from product where product_id = :product-id::INTEGER ")
+(defsql fetch-product-with-cast (product-id))
+
+(deftest select-with-postgresql-cast
+  (multiple-value-bind (sql params)
+      (gen-sql-and-params fetch-product-with-cast '(:product-id "123"))
+    (ok (string= " select * from product where product_id =           ?::INTEGER " sql))
+    (ok (equal '("123") params))))
 
