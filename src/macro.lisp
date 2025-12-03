@@ -84,7 +84,7 @@ Example:
                    (loop repeat (length sql-form) do (write-string "~A" s))))
     (setf sql `(format NIL ,sqlbuf ,@sql-form))
 
-    (append def-form `(:sql-body ,sql :sql-type `select))))
+    (append def-form `(:sql-body ,sql :sql-type :select))))
 
 
 @export
@@ -104,5 +104,5 @@ Example:
                    (loop repeat (length sql-form) do (write-string "~A" s))))
     (setf sql `(format NIL ,sqlbuf ,@sql-form))
 
-    (append def-form `(:sql-body ,sql :sql-type `update))))
+    (append def-form `(:sql-body ,sql :sql-type :update))))
 
