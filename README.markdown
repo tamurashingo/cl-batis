@@ -56,17 +56,123 @@ When using `(cl-syntax:use-syntax :annot)`, `@update` and `@select` annotations 
 
 ### Generate SQL and Parameters
 
-Use `gen-sql-and-params` to generate the prepared statement SQL and its parameters:
+Use `gen-sql-and-params` to generate the prepared statement SQL and its parameters.
+Parameters should be passed as a property list:
 
 ```common-lisp
-(gen-sql-and-params register-product :id 1 :name "NES" :price 14800)
+(gen-sql-and-params register-product '(:id 1 :name "NES" :price 14800))
 ; => "insert into product (id, name, price) values (?, ?, ?)"
 ;    (1 "NES" 14800)
 
-(gen-sql-and-params filter-product :name nil :price_low 20000 :price_high nil)
+(gen-sql-and-params filter-product '(:name nil :price_low 20000 :price_high nil))
 ; => "select id, name, price from product WHERE price >= ? order by id "
 ;    (20000)
 ```
+
+### Dynamic IN Clause Expansion
+
+Cl-Batis supports dynamic IN clause expansion based on parameter types:
+
+- **ATOM (non-list)**: Expands to a single `?`
+- **LIST**: Expands to `?, ?, ...` based on list length
+- **NIL**: Expands to a single `?` with `nil` value
+
+#### Basic Usage
+
+```common-lisp
+@select ("SELECT * FROM products WHERE id IN (:ids)")
+(defsql find-products-by-ids (ids))
+
+;; With a list of values
+(gen-sql-and-params find-products-by-ids '(:ids (1 2 3)))
+; => "SELECT * FROM products WHERE id IN (?, ?, ?)"
+;    (1 2 3)
+
+;; Dynamically change the number of values
+(gen-sql-and-params find-products-by-ids '(:ids (1 2 3 4 5)))
+; => "SELECT * FROM products WHERE id IN (?, ?, ?, ?, ?)"
+;    (1 2 3 4 5)
+
+;; With a single value (as ATOM)
+(gen-sql-and-params find-products-by-ids '(:ids 42))
+; => "SELECT * FROM products WHERE id IN (?)"
+;    (42)
+
+;; With NIL (empty list)
+(gen-sql-and-params find-products-by-ids '(:ids nil))
+; => "SELECT * FROM products WHERE id IN (?)"
+;    (NIL)
+```
+
+#### NOT IN Clause
+
+```common-lisp
+@select ("SELECT * FROM users WHERE id NOT IN (:excluded_ids)")
+(defsql find-users-not-in (excluded_ids))
+
+(gen-sql-and-params find-users-not-in '(:excluded_ids (10 20)))
+; => "SELECT * FROM users WHERE id NOT IN (?, ?)"
+;    (10 20)
+```
+
+#### Mixed Parameters
+
+```common-lisp
+@select ("SELECT * FROM products WHERE category_id = :category_id AND id IN (:ids)")
+(defsql find-products-by-category (category_id ids))
+
+(gen-sql-and-params find-products-by-category '(:category_id 10 :ids (1 2 3)))
+; => "SELECT * FROM products WHERE category_id = ? AND id IN (?, ?, ?)"
+;    (10 1 2 3)
+```
+
+#### Dynamic SQL with sql-where
+
+When dealing with optional IN clauses, use `sql-where` to conditionally include them:
+
+```common-lisp
+@select ("SELECT * FROM orders"
+         (sql-where
+           "user_id = :user_id"
+           (when product_ids "AND product_id IN (:product_ids)")
+           (when status "AND status = :status")))
+(defsql find-orders (user_id product_ids status))
+
+;; All conditions
+(gen-sql-and-params find-orders
+                    '(:user_id 100 :product_ids (1 2 3) :status "shipped"))
+; => "SELECT * FROM orders WHERE user_id = ? AND product_id IN (?, ?, ?) AND status = ?"
+;    (100 1 2 3 "shipped")
+
+;; Without product_ids
+(gen-sql-and-params find-orders
+                    '(:user_id 100 :product_ids nil :status "shipped"))
+; => "SELECT * FROM orders WHERE user_id = ? AND status = ?"
+;    (100 "shipped")
+```
+
+#### Backward Compatibility
+
+The traditional method (multiple parameters with commas) still works:
+
+```common-lisp
+@select ("SELECT * FROM users WHERE id IN (:id1, :id2, :id3)")
+(defsql find-by-three-ids (id1 id2 id3))
+
+(gen-sql-and-params find-by-three-ids '(:id1 1 :id2 2 :id3 3))
+; => "SELECT * FROM users WHERE id IN (?, ?, ?)"
+;    (1 2 3)
+```
+
+#### Notes on NIL Handling
+
+When `nil` is passed to an IN clause parameter, it expands to `IN (?)` with a `nil` value.
+Since `IN (NULL)` typically returns 0 rows in SQL, it's recommended to use `sql-where`
+to conditionally exclude the IN clause when the list is empty.
+
+**Library Responsibility**: Generate `?` placeholders based on parameter types
+**Developer Responsibility**: Handle empty lists appropriately using dynamic SQL construction
+
 
 ### Dynamic Conditions
 
