@@ -11,86 +11,132 @@
   (scan "^[a-zA-Z0-9_-]$" (string c)))
 
 @export
-(defun parse (sql)
-  "generate prepared-type SQL and parameters"
-  (let* ((len (length sql))
-         (pos (lex-normal sql 0 len '()))
-         (s (copy-seq sql)))
-    (if (null pos)
-        (list :sql s :args '())
-        (list :sql s
-              :args (loop for (start end) in (nreverse pos)
-                          collect (let* ((param (subseq sql (1+ start) end)))
-                                    (loop for x from start below (1- end)
-                                          do (setf (elt s x) #\Space))
-                                    (setf (elt s (1- end)) #\?)
-                                    (intern (string-upcase param) :keyword)))))))
+(defun parse (sql params)
+  "Generate prepared-type SQL and parameters
 
-(defun lex-normal (sql pos len params)
-  (if (>= pos len)
-      params
-      (let ((c (char sql pos)))
-        (cond ((char= c #\')
-               (lex-quote sql (1+ pos) len params))
-              ((char= c #\")
-               (lex-doublequote sql (1+ pos) len params))
-              ((char= c #\:)
-               (lex-colon sql (1+ pos) len params pos))
-              (t
-               (lex-normal sql (1+ pos) len params))))))
+  sql: SQL string
+  params: runtime parameters (property list)
 
-(defun lex-quote (sql pos len params)
-  (if (>= pos len)
-      params
-      (let ((c (char sql pos)))
-        (cond ((char= c #\')
-               (lex-normal sql (1+ pos) len params))
-              (t
-               (lex-quote sql (1+ pos) len params))))))
+  Returns:
+    :sql - prepared statement SQL
+    :args - expanded parameter list"
+  (multiple-value-bind (prepared-sql param-list)
+      (rebuild-sql sql params)
+    (list :sql prepared-sql
+          :args param-list)))
 
-(defun lex-doublequote (sql pos len params)
-  (if (>= pos len)
-      params
-      (let ((c (char sql pos)))
-        (cond ((char= c #\")
-               (lex-normal sql (1+ pos) len params))
-              (t
-               (lex-doublequote sql (1+ pos) len params))))))
+(defun rebuild-sql (sql params)
+  "Rebuild SQL string with parameter expansion
 
-(defun lex-colon (sql pos len params start)
-  (if (>= pos len)
-      params
-      (let ((c (char sql pos)))
-        (cond ((char= c #\:)
-               (lex-normal sql (1+ pos) len params))
-              ((param-char-p c)
-               (lex-param sql (1+ pos) len params start))
-              (t
-               (lex-normal sql pos len params))))))
+  Returns: (values new-sql param-list)"
+  (let ((result (make-array (length sql)
+                            :element-type 'character
+                            :adjustable t
+                            :fill-pointer 0))
+        (param-list '())
+        (len (length sql))
+        (pos 0))
+    (labels ((append-char (c)
+               (vector-push-extend c result))
 
-(defun lex-param (sql pos len params start)
-  (if (>= pos len)
-      (push (list start pos)
-            params)
-      (let ((c (char sql pos)))
-        (cond ((param-char-p c)
-               (lex-param sql (1+ pos) len params start))
-              ((char= c #\:)
-               (lex-normal sql pos len (push (list start pos)
-                                             params)))
-              ((or (char= c #\Space)
-                   (char= c #\Tab)
-                   (char= c #\Return)
-                   (char= c #\Linefeed))
-               (lex-normal sql (1+ pos) len (push (list start pos)
-                                                  params)))
-              ((char= c #\')
-               (lex-quote sql (1+ pos) len (push (list start pos)
-                                                 params)))
-              ((char= c #\")
-               (lex-doublequote sql (1+ pos) len (push (list start pos)
-                                                       params)))
-              (t
-               (lex-normal sql (1+ pos) len (push (list start pos)
-                                                  params)))))))
+             (append-string (str)
+               (loop for c across str
+                     do (append-char c)))
+
+             (find-param-end (start)
+               "Find the end position of parameter name"
+               (loop for i from start below len
+                     while (param-char-p (char sql i))
+                     finally (return i)))
+
+             (process-param (param-keyword value)
+               "Process parameter based on its type"
+               (cond
+                 ;; NIL case
+                 ((null value)
+                  (append-char #\?)
+                  (push nil param-list))
+
+                 ;; LIST case (non-NIL)
+                 ((listp value)
+                  ;; Generate "?, ?, ..." - ~* consumes the parameter without outputting it
+                  (append-string (format nil "~{?~*~^, ~}" value))
+                  (dolist (v value)
+                    (push v param-list)))
+
+                 ;; ATOM case
+                 (t
+                  (append-char #\?)
+                  (push value param-list))))
+
+             (scan-sql ()
+               "Scan SQL string and build new SQL"
+               (loop while (< pos len)
+                     do (let ((c (char sql pos)))
+                          (cond
+                            ;; Single quote
+                            ((char= c #\')
+                             (append-char c)
+                             (incf pos)
+                             (scan-quote))
+
+                            ;; Double quote
+                            ((char= c #\")
+                             (append-char c)
+                             (incf pos)
+                             (scan-doublequote))
+
+                            ;; Parameter
+                            ((char= c #\:)
+                             ;; Check for :: (double colon for PostgreSQL cast)
+                             (if (and (< (1+ pos) len)
+                                      (char= (char sql (1+ pos)) #\:))
+                                 ;; :: case - output as is
+                                 (progn
+                                   (append-string "::")
+                                   (setf pos (+ pos 2)))
+                                 ;; : case - parameter
+                                 (let* ((param-start (1+ pos))
+                                        (param-end (find-param-end param-start)))
+                                   (if (> param-end param-start)
+                                       ;; Valid parameter found
+                                       (let* ((param-name (subseq sql param-start param-end))
+                                              (param-keyword (intern (string-upcase param-name) :keyword))
+                                              (value (getf params param-keyword)))
+                                         (process-param param-keyword value)
+                                         (setf pos param-end))
+                                       ;; No valid parameter, output : and move on
+                                       (progn
+                                         (append-char #\:)
+                                         (incf pos))))))
+
+                            ;; Normal character
+                            (t
+                             (append-char c)
+                             (incf pos))))))
+
+             (scan-quote ()
+               "Scan inside single quote"
+               (loop while (< pos len)
+                     do (let ((c (char sql pos)))
+                          (append-char c)
+                          (incf pos)
+                          (when (char= c #\')
+                            (return)))))
+
+             (scan-doublequote ()
+               "Scan inside double quote"
+               (loop while (< pos len)
+                     do (let ((c (char sql pos)))
+                          (append-char c)
+                          (incf pos)
+                          (when (char= c #\")
+                            (return))))))
+
+      ;; Start scanning
+      (scan-sql)
+
+      ;; Return results
+      (values (coerce result 'string)
+              (nreverse param-list)))))
 

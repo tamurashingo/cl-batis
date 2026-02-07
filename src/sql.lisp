@@ -54,17 +54,6 @@
   "generate parameterized SQL and its parameters"
   (let* ((sql-fn (slot-value sql-name 'batis.macro::gen-sql-fn))
          (sql (apply sql-fn params))
-         (parsed-sql (parse sql))
-         (params (create-params (getf parsed-sql :args) params)))
-    (values (getf parsed-sql :sql) params)))
-
-(defun create-params (named-params named-value)
-  "create params to use execute method.
-named-params: array of parameter names
-named-value: property list of argment values
-
-  (create-params '(NAME PRICE PRICE) '(:NAME \"name\" :PRICE 100))
-  -> (\"name\" 100 100)"
-  (loop for key in named-params
-        collect (let ((key (intern (symbol-name key) :KEYWORD)))
-                  (getf named-value key))))
+         (parsed-sql (parse sql params)))
+    (values (getf parsed-sql :sql)
+            (getf parsed-sql :args))))
